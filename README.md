@@ -1,7 +1,8 @@
-<div align="center">
-  <img src="docs/assets/logo.jpg" alt="Alimony+ Logo" width="120" style="border-radius: 20%"/>
-  <h1>Alimony+</h1>
-  <p><strong>Making the maintenance journey clearer, more prepared, more trackable and more accessible.</strong></p>
+<div align="left">
+  <img src="docs/assets/logo.jpg" alt="Alimony+ Logo" width="120" style="border-radius: 20%; float: left; margin-right: 25px; margin-bottom: 10px;"/>
+  
+  <h1 style="border-bottom: none; margin-bottom: 5px;">Alimony+</h1>
+  <p style="font-size: 1.1em;"><strong>Making the maintenance journey clearer, more prepared, more trackable and more accessible.</strong></p>
   
   <p>
     <img src="https://img.shields.io/badge/Project-Tech%20Tomorrow-blue?style=for-the-badge" alt="Tech Tomorrow" />
@@ -10,6 +11,7 @@
     <img src="https://img.shields.io/badge/AI-Responsible%20RAG-purple?style=for-the-badge" alt="AI Tech" />
   </p>
 </div>
+<br clear="all" />
 
 ---
 
