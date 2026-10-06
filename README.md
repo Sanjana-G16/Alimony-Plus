@@ -1,6 +1,6 @@
 <div align="center">
   <h1 style="border-bottom: none;">
-    <img src="docs/assets/logo.jpg" alt="Alimony+ Logo" width="80" style="border-radius: 20%; vertical-align: middle; margin-right: 15px;" />
+    <img src="docs/assets/logo.jpg" alt="Alimony+ Logo" width="60" align="absmiddle" style="border-radius: 20%; margin-right: 15px;" />
     Alimony+
   </h1>
   <p style="font-size: 1.1em;"><strong>Making the maintenance journey clearer, more prepared, more trackable and more accessible.</strong></p>
