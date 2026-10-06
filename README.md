@@ -104,6 +104,13 @@ The challenge of securing maintenance in India goes far beyond simply "not knowi
 
 ## The Reality of the Problem
 
+<div align="center">
+  <img src="docs/assets/real-problem.jpg" alt="The Real Struggle for Justice" width="800" style="border-radius: 12px; margin-bottom: 10px;"/>
+  <br>
+  <em>(The painful reality of domestic struggles and waiting for justice. Many face immense anxiety and confusion without structured guidance. This is why Alimony+ exists: to turn distress into prepared action.)</em>
+</div>
+<br>
+
 Understanding the legal ecosystem in India requires acknowledging how courts and legal aid services currently operate. 
 
 <div align="center">
@@ -207,6 +214,10 @@ flowchart LR
 ---
 
 ## AI Assistant
+
+<div align="center">
+  <img src="docs/assets/alimony-mockup.jpg" alt="Alimony+ AI Assistant UI" width="600" style="border-radius: 12px; margin-bottom: 15px;"/>
+</div>
 
 The Alimony+ AI Assistant is a grounded legal-information tool, **not an autonomous lawyer.**
 
