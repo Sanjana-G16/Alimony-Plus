@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="docs/assets/logo.jpg" alt="Alimony+ Logo" width="120" style="border-radius: 20%"/>
   <h1>Alimony+</h1>
   <p><strong>Making the maintenance journey clearer, more prepared, more trackable and more accessible.</strong></p>
   
