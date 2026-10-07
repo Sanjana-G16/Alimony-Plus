@@ -1,6 +1,4 @@
 import bcrypt from "bcrypt";
-
-
 import db from "../config/db.js";
 
 const registerUser = async (req, res) => {
@@ -52,5 +50,7 @@ const registerUser = async (req, res) => {
         });
     }
 };
+
+
 
 export default registerUser;
