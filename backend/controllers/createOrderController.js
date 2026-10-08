@@ -1,5 +1,6 @@
 import db from "../config/db.js";
 import { Temporal } from "@js-temporal/polyfill";
+import createAuditLog from "../utils/auditLog.js";
 
 const createOrder = async (req, res) => {
     try {
@@ -11,15 +12,45 @@ const createOrder = async (req, res) => {
             description
         } = req.body;
 
-        if (!proceedingId) {
+        const numericProceedingId = Number(proceedingId);
+
+        if (!Number.isInteger(numericProceedingId) || numericProceedingId <= 0) {
             return res.status(400).json({
                 success: false,
-                message: "Proceeding ID is required"
+                message: "Invalid Proceeding ID"
             });
         }
 
+        let numericAmount = null;
+
+        if (amount !== undefined && amount !== null && amount !== "") {
+            numericAmount = Number(amount);
+
+            if (!Number.isFinite(numericAmount) || numericAmount < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Amount must be a valid non-negative number"
+                });
+            }
+        }
+
+        let parsedOrderDate = null;
+
+        if (orderDate !== undefined && orderDate !== null && orderDate !== "") {
+            try {
+                parsedOrderDate = Temporal.Instant.from(
+                    `${orderDate}T00:00:00Z`
+                );
+            } catch {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid order date"
+                });
+            }
+        }
+
         const proceeding = await db.orm.public.Proceeding
-            .where((p) => p.id.eq(Number(proceedingId)))
+            .where((p) => p.id.eq(numericProceedingId))
             .first();
 
         if (!proceeding) {
@@ -41,13 +72,19 @@ const createOrder = async (req, res) => {
         }
 
         const order = await db.orm.public.Order.create({
-            proceedingId: Number(proceedingId),
+            proceedingId: numericProceedingId,
             orderType: orderType || null,
-            orderDate: orderDate
-                ? Temporal.Instant.from(`${orderDate}T00:00:00Z`)
-                : null,
-            amount: amount ? Number(amount) : null,
+            orderDate: parsedOrderDate,
+            amount: numericAmount,
             description: description || null
+        });
+
+        await createAuditLog({
+            userId: req.user.id,
+            action: "ORDER_CREATED",
+            entityType: "Order",
+            entityId: order.id,
+            metadata: `proceedingId=${numericProceedingId};amount=${numericAmount};orderType=${orderType || ""}`
         });
 
         res.status(201).json({

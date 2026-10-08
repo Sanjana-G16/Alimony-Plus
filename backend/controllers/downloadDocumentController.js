@@ -7,12 +7,20 @@ import setRlsUser from "../utils/rlsContext.js";
 const downloadDocument = async (req, res) => {
     try {
         const { id } = req.params;
+        const numericDocumentId = Number(id);
+
+        if (!Number.isInteger(numericDocumentId) || numericDocumentId <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Document ID"
+            });
+        }
 
         const document = await db.transaction(async (tx) => {
             await setRlsUser(tx, db, req.user.id);
 
             const documentData = await tx.orm.public.Document
-                .where((d) => d.id.eq(Number(id)))
+                .where((d) => d.id.eq(numericDocumentId))
                 .first();
 
             if (!documentData) {
@@ -48,10 +56,7 @@ const downloadDocument = async (req, res) => {
             authTag
         );
 
-        res.setHeader(
-            "Content-Type",
-            document.mimeType
-        );
+        res.setHeader("Content-Type", document.mimeType);
 
         res.setHeader(
             "Content-Disposition",

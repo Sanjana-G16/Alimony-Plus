@@ -5,6 +5,7 @@ import crypto from "crypto";
 import db from "../config/db.js";
 import { encryptFile } from "../utils/encryption.js";
 import setRlsUser from "../utils/rlsContext.js";
+import createAuditLog from "../utils/auditLog.js";
 
 const uploadDocument = async (req, res) => {
     let storagePath = null;
@@ -12,7 +13,6 @@ const uploadDocument = async (req, res) => {
     try {
         const { caseId, documentType } = req.body;
 
-        // Check file
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -20,28 +20,25 @@ const uploadDocument = async (req, res) => {
             });
         }
 
-        // Check caseId
-        if (!caseId) {
+        const numericCaseId = Number(caseId);
+
+        if (!Number.isInteger(numericCaseId) || numericCaseId <= 0) {
             return res.status(400).json({
                 success: false,
-                message: "Case ID is required"
+                message: "Invalid Case ID"
             });
         }
 
-        // Encrypt uploaded file
         const { encrypted, iv, authTag } = encryptFile(req.file.buffer);
 
-        // Create random file name
         const fileName = `${crypto.randomUUID()}.enc`;
 
         const uploadDir = path.join(process.cwd(), "uploads");
 
-        // Make sure uploads directory exists
         await fs.mkdir(uploadDir, { recursive: true });
 
         storagePath = path.join(uploadDir, fileName);
 
-        // Store IV + Auth Tag + encrypted content
         const encryptedFile = Buffer.concat([
             iv,
             authTag,
@@ -50,29 +47,23 @@ const uploadDocument = async (req, res) => {
 
         await fs.writeFile(storagePath, encryptedFile);
 
-        // Database operations with RLS
         const document = await db.transaction(async (tx) => {
-
-            // Set current logged-in user for PostgreSQL RLS
             await setRlsUser(tx, db, req.user.id);
 
-            // Find case
             const caseData = await tx.orm.public.Case
-                .where((c) => c.id.eq(Number(caseId)))
+                .where((c) => c.id.eq(numericCaseId))
                 .first();
 
             if (!caseData) {
                 throw new Error("CASE_NOT_FOUND");
             }
 
-            // Check case ownership
             if (caseData.userId !== req.user.id) {
                 throw new Error("ACCESS_DENIED");
             }
 
-            // Save document metadata
             const newDocument = await tx.orm.public.Document.create({
-                caseId: Number(caseId),
+                caseId: numericCaseId,
                 fileName,
                 originalName: req.file.originalname,
                 mimeType: req.file.mimetype,
@@ -85,7 +76,15 @@ const uploadDocument = async (req, res) => {
             return newDocument;
         });
 
-        // Success response
+        // Create audit log
+        await createAuditLog({
+            userId: req.user.id,
+            action: "DOCUMENT_UPLOADED",
+            entityType: "Document",
+            entityId: document.id,
+            metadata: `caseId=${numericCaseId};documentType=${documentType || ""}`
+        });
+
         res.status(201).json({
             success: true,
             message: "Document uploaded and encrypted successfully",
@@ -102,15 +101,11 @@ const uploadDocument = async (req, res) => {
     } catch (error) {
         console.log(error);
 
-        // Delete encrypted file if database operation fails
         if (storagePath) {
             try {
                 await fs.unlink(storagePath);
             } catch (fileError) {
-                console.log(
-                    "Encrypted file cleanup failed:",
-                    fileError
-                );
+                console.log("Encrypted file cleanup failed:", fileError);
             }
         }
 

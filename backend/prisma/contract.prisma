@@ -43,15 +43,14 @@ model Order {
   proceedingId Int
   orderType    String?
   orderDate    DateTime?
-  amount       Float?
+  amount       Decimal?
   description  String?
   createdAt    DateTime  @default(now())
 }
-
 model Payment {
   id          Int      @id @default(autoincrement())
   orderId     Int
-  amount      Float
+  amount      Decimal
   paymentDate DateTime
   status      String   @default("RECEIVED")
   reference   String?
@@ -89,4 +88,15 @@ model CalculatorRun {
   inputData      String
   resultData     String
   createdAt      DateTime @default(now())
+}
+
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+  userId Int
+  action String
+  entityType String
+  entityId Int?
+  metadata String?
+  createdAt DateTime @default(now())
 }

@@ -1,4 +1,42 @@
 import db from "../config/db.js";
+import createAuditLog from "../utils/auditLog.js";
+
+const financialFields = [
+    "applicantIncome",
+    "respondentIncome",
+    "applicantEssentialExpenses",
+    "respondentEssentialExpenses",
+    "childCosts",
+    "housingCost",
+    "medicalCosts",
+    "educationCosts",
+    "applicantLiabilities",
+    "respondentLiabilities",
+    "applicantAssetsIncome",
+    "respondentAssetsIncome",
+    "existingSupport",
+    "litigationCosts"
+];
+
+const validateFinancialInputs = (input) => {
+    for (const field of financialFields) {
+        if (
+            input[field] === undefined ||
+            input[field] === null ||
+            input[field] === ""
+        ) {
+            continue;
+        }
+
+        const value = Number(input[field]);
+
+        if (!Number.isFinite(value) || value < 0) {
+            return `${field} must be a valid non-negative number`;
+        }
+    }
+
+    return null;
+};
 
 const calculatePlanning = (input) => {
     const {
@@ -98,15 +136,26 @@ const calculatorController = async (req, res) => {
     try {
         const { caseId, ...input } = req.body;
 
-        if (!caseId) {
+        const numericCaseId = Number(caseId);
+
+        if (!Number.isInteger(numericCaseId) || numericCaseId <= 0) {
             return res.status(400).json({
                 success: false,
-                message: "Case ID is required"
+                message: "Invalid Case ID"
+            });
+        }
+
+        const validationError = validateFinancialInputs(input);
+
+        if (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError
             });
         }
 
         const caseData = await db.orm.public.Case
-            .where((c) => c.id.eq(Number(caseId)))
+            .where((c) => c.id.eq(numericCaseId))
             .first();
 
         if (!caseData) {
@@ -128,11 +177,19 @@ const calculatorController = async (req, res) => {
         const result = calculatePlanning(input);
 
         const calculatorRun = await db.orm.public.CalculatorRun.create({
-            caseId: Number(caseId),
+            caseId: numericCaseId,
             userId: req.user.id,
             formulaVersion,
             inputData: JSON.stringify(input),
             resultData: JSON.stringify(result)
+        });
+
+        await createAuditLog({
+            userId: req.user.id,
+            action: "CALCULATOR_RUN",
+            entityType: "CalculatorRun",
+            entityId: calculatorRun.id,
+            metadata: `caseId=${numericCaseId};formulaVersion=${formulaVersion}`
         });
 
         res.status(201).json({
